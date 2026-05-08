@@ -71,7 +71,7 @@ export function useSaveDream() {
         const { error } = await supabase.from("dreams").update(patch).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("dreams").insert({ ...d, user_id: uid });
+        const { error } = await supabase.from("dreams").insert({ ...d, user_id: uid } as any);
         if (error) throw error;
       }
     },
@@ -114,7 +114,7 @@ export function useSaveDebt() {
         const { error } = await supabase.from("debts").update(patch).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("debts").insert({ ...d, user_id: uid });
+        const { error } = await supabase.from("debts").insert({ ...d, user_id: uid } as any);
         if (error) throw error;
       }
     },
@@ -157,7 +157,7 @@ export function useSaveGoal() {
         const { error } = await supabase.from("other_goals").update(patch).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("other_goals").insert({ ...d, user_id: uid });
+        const { error } = await supabase.from("other_goals").insert({ ...d, user_id: uid } as any);
         if (error) throw error;
       }
     },
