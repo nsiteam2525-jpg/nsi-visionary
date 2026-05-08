@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadershipRouteImport } from './routes/leadership'
 import { Route as DreamsRouteImport } from './routes/dreams'
 import { Route as DebtsRouteImport } from './routes/debts'
@@ -16,6 +17,11 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadershipRoute = LeadershipRouteImport.update({
   id: '/leadership',
   path: '/leadership',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/debts': typeof DebtsRoute
   '/dreams': typeof DreamsRoute
   '/leadership': typeof LeadershipRoute
+  '/login': typeof LoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/debts': typeof DebtsRoute
   '/dreams': typeof DreamsRoute
   '/leadership': typeof LeadershipRoute
+  '/login': typeof LoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/debts': typeof DebtsRoute
   '/dreams': typeof DreamsRoute
   '/leadership': typeof LeadershipRoute
+  '/login': typeof LoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +90,16 @@ export interface FileRouteTypes {
     | '/debts'
     | '/dreams'
     | '/leadership'
+    | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/dashboard' | '/debts' | '/dreams' | '/leadership'
+  to:
+    | '/'
+    | '/about'
+    | '/dashboard'
+    | '/debts'
+    | '/dreams'
+    | '/leadership'
+    | '/login'
   id:
     | '__root__'
     | '/'
@@ -91,6 +108,7 @@ export interface FileRouteTypes {
     | '/debts'
     | '/dreams'
     | '/leadership'
+    | '/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,10 +118,18 @@ export interface RootRouteChildren {
   DebtsRoute: typeof DebtsRoute
   DreamsRoute: typeof DreamsRoute
   LeadershipRoute: typeof LeadershipRoute
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leadership': {
       id: '/leadership'
       path: '/leadership'
@@ -156,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   DebtsRoute: DebtsRoute,
   DreamsRoute: DreamsRoute,
   LeadershipRoute: LeadershipRoute,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
