@@ -1,60 +1,63 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { useLocal, inr } from "@/lib/storage";
-import { defaultProfile, type UserProfile, type Dream, type Debt, type OtherGoal } from "@/lib/types";
-import { useMemo, useState } from "react";
+import { inr } from "@/lib/storage";
+import { useAuth } from "@/lib/auth";
+import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, type Profile } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — NSI Life OS" }, { name: "description", content: "Your personal NSI life and financial micro-planning dashboard." }] }),
   component: Dashboard,
 });
 
-function Onboarding({ onDone }: { onDone: (p: UserProfile) => void }) {
-  const [p, setP] = useState<UserProfile>(defaultProfile);
+const onboardingSteps = [
+  { label: "What's your full name?", field: "full_name", placeholder: "e.g. Vivek Chauhan", type: "text" },
+  { label: "What should we call you?", field: "nickname", placeholder: "Your nickname", type: "text" },
+  { label: "Your age?", field: "age", placeholder: "e.g. 26", type: "number" },
+  { label: "Your monthly income (₹)?", field: "monthly_income", placeholder: "50000", type: "number" },
+  { label: "Current savings (₹)?", field: "savings", placeholder: "100000", type: "number" },
+  { label: "Target retirement age?", field: "retirement_age", placeholder: "55", type: "number" },
+  { label: "Your city?", field: "city", placeholder: "Ahmedabad", type: "text" },
+  { label: "Your biggest motivation?", field: "motivation", placeholder: "Family · Freedom · Legacy", type: "text" },
+] as const;
+
+function Onboarding({ profile, onDone }: { profile: Profile; onDone: (p: Partial<Profile>) => void }) {
+  const [p, setP] = useState<Partial<Profile>>(profile);
   const [step, setStep] = useState(0);
-  const steps = [
-    { label: "What's your full name?", field: "fullName", placeholder: "e.g. Vivek Chauhan", type: "text" },
-    { label: "What should we call you?", field: "nickname", placeholder: "Your nickname", type: "text" },
-    { label: "Your age?", field: "age", placeholder: "e.g. 26", type: "number" },
-    { label: "Your monthly income (₹)?", field: "monthlyIncome", placeholder: "50000", type: "number" },
-    { label: "Current savings (₹)?", field: "savings", placeholder: "100000", type: "number" },
-    { label: "Target retirement age?", field: "retirementAge", placeholder: "55", type: "number" },
-    { label: "Your city?", field: "city", placeholder: "Ahmedabad", type: "text" },
-    { label: "Your biggest motivation?", field: "motivation", placeholder: "Family · Freedom · Legacy", type: "text" },
-  ] as const;
-  const cur = steps[step];
+  const cur = onboardingSteps[step];
   const value = (p as any)[cur.field] ?? "";
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-[80vh] flex items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="glass-strong p-8 sm:p-12 w-full max-w-xl">
-        <div className="text-xs uppercase tracking-[0.3em] text-gold">Step {step + 1} of {steps.length}</div>
+        <div className="text-xs uppercase tracking-[0.3em] text-gold">Step {step + 1} of {onboardingSteps.length}</div>
         <h2 className="mt-3 font-display text-3xl sm:text-4xl">{cur.label}</h2>
         <input
           autoFocus
           type={cur.type}
           value={value}
-          onChange={(e) => setP({ ...p, [cur.field]: cur.type === "number" ? Number(e.target.value) : e.target.value })}
+          onChange={(e) => setP({ ...p, [cur.field]: cur.type === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value })}
           placeholder={cur.placeholder}
           className="mt-6 w-full bg-transparent border-b-2 border-border focus:border-gold outline-none py-3 text-2xl font-display"
         />
         <div className="mt-2 h-1 rounded-full bg-border/40 overflow-hidden">
-          <div className="h-full bg-[var(--gradient-gold)] transition-all" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
+          <div className="h-full bg-[var(--gradient-gold)] transition-all" style={{ width: `${((step + 1) / onboardingSteps.length) * 100}%` }} />
         </div>
         <div className="mt-8 flex justify-between">
           <button disabled={step === 0} onClick={() => setStep(step - 1)} className="text-sm text-muted-foreground disabled:opacity-30">Back</button>
           <button
             onClick={() => {
-              if (step === steps.length - 1) onDone({ ...p, onboarded: true });
+              if (step === onboardingSteps.length - 1) onDone({ ...p, onboarded: true });
               else setStep(step + 1);
             }}
             className="btn-gold rounded-full px-6 py-2 text-sm font-semibold inline-flex items-center gap-2"
           >
-            {step === steps.length - 1 ? "Enter NSI" : "Continue"} <ArrowRight size={16} />
+            {step === onboardingSteps.length - 1 ? "Enter NSI" : "Continue"} <ArrowRight size={16} />
           </button>
         </div>
       </motion.div>
@@ -72,10 +75,15 @@ function Counter({ label, value, accent }: { label: string; value: string; accen
 }
 
 function Dashboard() {
-  const [profile, setProfile] = useLocal<UserProfile>("nsi:profile", defaultProfile);
-  const [dreams] = useLocal<Dream[]>("nsi:dreams", []);
-  const [debts] = useLocal<Debt[]>("nsi:debts", []);
-  const [others] = useLocal<OtherGoal[]>("nsi:others", []);
+  const { user, loading } = useAuth();
+  const nav = useNavigate();
+  const { data: profile, isLoading: pLoading } = useProfile();
+  const saveProfile = useSaveProfile();
+  const { data: dreams = [] } = useDreams();
+  const { data: debts = [] } = useDebts();
+  const { data: others = [] } = useGoals();
+
+  useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
 
   const stats = useMemo(() => {
     const sum = (arr: { amount: number }[]) => arr.reduce((a, b) => a + (b.amount || 0), 0);
@@ -88,7 +96,7 @@ function Dashboard() {
     const otherTotal = sum(others);
     const grand = dreamTotal + debtTotal + otherTotal;
     const remaining = Math.max(grand - sumSaved, 0);
-    const yearsAvg = dreams.length ? dreams.reduce((a, b) => a + b.deadlineYears, 0) / dreams.length : 5;
+    const yearsAvg = dreams.length ? dreams.reduce((a, b) => a + b.deadline_years, 0) / dreams.length : 5;
     const yearly = remaining / Math.max(yearsAvg, 1);
     const monthly = yearly / 12;
     const weekly = yearly / 52;
@@ -97,12 +105,20 @@ function Dashboard() {
     return { short, medium, long, dreamTotal, debtTotal, otherTotal, grand, remaining, yearly, monthly, weekly, daily, completion, sumSaved };
   }, [dreams, debts, others]);
 
-  if (!profile.onboarded) return (
-    <div>
-      <SiteHeader />
-      <Onboarding onDone={setProfile} />
-    </div>
-  );
+  if (loading || pLoading || !user) {
+    return <div className="min-h-screen"><SiteHeader /><div className="p-20 text-center text-muted-foreground">Loading…</div></div>;
+  }
+
+  if (!profile?.onboarded) {
+    return (
+      <div><SiteHeader />
+        <Onboarding
+          profile={profile ?? ({ user_id: user.id, full_name: "", nickname: "", city: "", age: null, monthly_income: 0, savings: 0, retirement_age: null, motivation: "", onboarded: false } as Profile)}
+          onDone={(p) => saveProfile.mutate(p, { onSuccess: () => toast.success("Welcome to NSI") })}
+        />
+      </div>
+    );
+  }
 
   const pieData = [
     { name: "Short Dreams", value: stats.short, fill: "oklch(0.62 0.22 265)" },
@@ -127,13 +143,13 @@ function Dashboard() {
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-gold">Welcome back</div>
             <h1 className="mt-2 font-display text-4xl sm:text-5xl">
-              {profile.nickname || profile.fullName || "Dreamer"}, your dream life is being built.
+              {profile.nickname || profile.full_name || "Dreamer"}, your dream life is being built.
             </h1>
             <p className="mt-2 text-muted-foreground italic">"{profile.motivation || "Every day is a step closer."}"</p>
           </div>
           <div className="flex gap-3">
             <Link to="/dreams" className="btn-gold rounded-full px-5 py-2 text-sm font-semibold">+ Add Dream</Link>
-            <button onClick={() => setProfile({ ...profile, onboarded: false })} className="glass rounded-full px-4 py-2 text-sm">Edit profile</button>
+            <button onClick={() => saveProfile.mutate({ onboarded: false })} className="glass rounded-full px-4 py-2 text-sm">Edit profile</button>
           </div>
         </motion.div>
 
@@ -185,9 +201,9 @@ function Dashboard() {
 
         <div className="mt-6 grid md:grid-cols-3 gap-5">
           {[
-            { i: Target, t: "Dreams", n: dreams.length, link: "/dreams", desc: "Map your future" },
-            { i: Wallet, t: "Debts", n: debts.length, link: "/debts", desc: "Face & defeat" },
-            { i: Heart, t: "Other Goals", n: others.length, link: "/debts", desc: "Family · Charity · Health" },
+            { i: Target, t: "Dreams", n: dreams.length, link: "/dreams" as const, desc: "Map your future" },
+            { i: Wallet, t: "Debts", n: debts.length, link: "/debts" as const, desc: "Face & defeat" },
+            { i: Heart, t: "Other Goals", n: others.length, link: "/debts" as const, desc: "Family · Charity · Health" },
           ].map((c) => (
             <Link key={c.t} to={c.link} className="glass p-6 hover:ring-gold transition group">
               <div className="flex items-center justify-between">
@@ -204,7 +220,7 @@ function Dashboard() {
         <div className="mt-8 glass-strong p-8 text-center">
           <TrendingUp className="text-gold mx-auto" size={28} />
           <p className="mt-3 font-display text-2xl max-w-2xl mx-auto">
-            "{profile.nickname || "Dreamer"}, save {inr(Math.max(stats.daily, 0))} every single day — and your entire dream universe completes in {(dreams.length ? (dreams.reduce((a, b) => a + b.deadlineYears, 0) / dreams.length).toFixed(1) : "—")} years."
+            "{profile.nickname || "Dreamer"}, save {inr(Math.max(stats.daily, 0))} every single day — and your entire dream universe completes in {(dreams.length ? (dreams.reduce((a, b) => a + b.deadline_years, 0) / dreams.length).toFixed(1) : "—")} years."
           </p>
         </div>
       </main>
