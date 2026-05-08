@@ -157,7 +157,7 @@ function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.08)" />
                   <XAxis dataKey="name" stroke="oklch(0.78 0.03 250)" />
                   <YAxis stroke="oklch(0.78 0.03 250)" tickFormatter={(v) => v >= 1e5 ? `${(v / 1e5).toFixed(1)}L` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : v} />
-                  <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: number) => inr(v)} />
+                  <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inr(Number(v))} />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="oklch(0.82 0.16 86)" />
                 </BarChart>
               </ResponsiveContainer>
@@ -175,7 +175,7 @@ function Dashboard() {
                     <Pie data={pieData} dataKey="value" innerRadius={50} outerRadius={90} paddingAngle={3}>
                       {pieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: number) => inr(v)} />
+                    <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inr(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
