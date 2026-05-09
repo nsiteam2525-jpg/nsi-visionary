@@ -2,12 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { inr } from "@/lib/storage";
+import { inrShort } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 import { useDreams, useSaveDream, useDeleteDream, type Dream } from "@/lib/api";
 import { useState } from "react";
-import { Trash2, Plus, Pencil, X, Check } from "lucide-react";
+import { Trash2, Pencil, X, Check } from "lucide-react";
 import { toast } from "sonner";
+import { IconPicker } from "@/components/IconPicker";
 
 export const Route = createFileRoute("/dreams")({
   head: () => ({ meta: [{ title: "Dreams — NSI" }, { name: "description", content: "Map your short, medium and long dreams." }] }),
@@ -19,38 +20,51 @@ const categoryMeta: Record<Dream["category"], { label: string; range: string }> 
   medium: { label: "Medium Dreams", range: "2 – 4 years" },
   long: { label: "Long Dreams", range: "5 – 10 years" },
 };
-const emojis = ["✨", "🚗", "🏠", "💍", "🌍", "📱", "💼", "🎓", "🏖️", "👑", "💎", "🚀"];
 
 const empty = (): Partial<Dream> => ({ category: "short", priority: 2, emoji: "✨", deadline_years: 1, saved: 0, amount: 0, name: "", why: "" });
 
-function DreamForm({ initial, onSave, onCancel, title }: { initial: Partial<Dream>; onSave: (d: Partial<Dream>) => void; onCancel?: () => void; title: string }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="text-[11px] uppercase tracking-widest text-gold/80 mb-1">{label}</div>
+      {children}
+      {hint && <div className="text-[10px] text-muted-foreground mt-1">{hint}</div>}
+    </label>
+  );
+}
+
+function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial: Partial<Dream>; onSave: (d: Partial<Dream>, done: () => void) => void; onCancel?: () => void; title: string; resetOnSave?: boolean }) {
   const [d, setD] = useState<Partial<Dream>>(initial);
   const num = (v: string) => v === "" ? undefined : Number(v);
+  const inputCls = "w-full bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none";
   return (
     <div className="glass-strong p-6">
       <h3 className="font-display text-2xl mb-4 text-gradient-gold">{title}</h3>
       <div className="grid sm:grid-cols-2 gap-3">
-        <input className="bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none" placeholder="Dream name" value={d.name ?? ""} onChange={(e) => setD({ ...d, name: e.target.value })} />
-        <select className="bg-background/40 border border-border rounded-lg px-3 py-2" value={d.category} onChange={(e) => setD({ ...d, category: e.target.value as Dream["category"] })}>
-          <option value="short">Short (6m–1y)</option>
-          <option value="medium">Medium (2–4y)</option>
-          <option value="long">Long (5–10y)</option>
-        </select>
-        <input type="number" className="bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none" placeholder="Amount (₹)" value={d.amount ?? ""} onChange={(e) => setD({ ...d, amount: num(e.target.value) ?? 0 })} />
-        <input type="number" step="0.5" className="bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none" placeholder="Years to achieve" value={d.deadline_years ?? ""} onChange={(e) => setD({ ...d, deadline_years: num(e.target.value) ?? 1 })} />
-        <input type="number" className="bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none" placeholder="Saved so far (₹)" value={d.saved ?? ""} onChange={(e) => setD({ ...d, saved: num(e.target.value) ?? 0 })} />
-        <select className="bg-background/40 border border-border rounded-lg px-3 py-2" value={d.priority} onChange={(e) => setD({ ...d, priority: Number(e.target.value) })}>
-          <option value={1}>High Priority</option><option value={2}>Medium Priority</option><option value={3}>Low Priority</option>
-        </select>
-        <input className="sm:col-span-2 bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none" placeholder="Why this dream matters" value={d.why ?? ""} onChange={(e) => setD({ ...d, why: e.target.value })} />
-        <div className="sm:col-span-2 flex flex-wrap gap-2">
-          {emojis.map((e) => (
-            <button key={e} type="button" onClick={() => setD({ ...d, emoji: e })} className={`w-10 h-10 rounded-lg text-xl ${d.emoji === e ? "ring-gold" : "glass"}`}>{e}</button>
-          ))}
-        </div>
+        <Field label="Dream Name"><input className={inputCls} placeholder="e.g. Dream Home" value={d.name ?? ""} onChange={(e) => setD({ ...d, name: e.target.value })} /></Field>
+        <Field label="Category">
+          <select className={inputCls + " bg-background/40"} value={d.category} onChange={(e) => setD({ ...d, category: e.target.value as Dream["category"] })}>
+            <option value="short">Short (6m–1y)</option>
+            <option value="medium">Medium (2–4y)</option>
+            <option value="long">Long (5–10y)</option>
+          </select>
+        </Field>
+        <Field label="Total Price (₹)" hint="Full target amount you need"><input type="number" className={inputCls} placeholder="e.g. 2500000" value={d.amount ?? ""} onChange={(e) => setD({ ...d, amount: num(e.target.value) ?? 0 })} /></Field>
+        <Field label="Years to Achieve"><input type="number" step="0.5" className={inputCls} placeholder="e.g. 3" value={d.deadline_years ?? ""} onChange={(e) => setD({ ...d, deadline_years: num(e.target.value) ?? 1 })} /></Field>
+        <Field label="Already Saved (₹)" hint="How much you've already saved toward it"><input type="number" className={inputCls} placeholder="e.g. 100000" value={d.saved ?? ""} onChange={(e) => setD({ ...d, saved: num(e.target.value) ?? 0 })} /></Field>
+        <Field label="Priority">
+          <select className={inputCls + " bg-background/40"} value={d.priority} onChange={(e) => setD({ ...d, priority: Number(e.target.value) })}>
+            <option value={1}>High Priority</option><option value={2}>Medium Priority</option><option value={3}>Low Priority</option>
+          </select>
+        </Field>
+        <div className="sm:col-span-2"><Field label="Why this dream matters"><input className={inputCls} placeholder="e.g. To gift my parents peace of mind" value={d.why ?? ""} onChange={(e) => setD({ ...d, why: e.target.value })} /></Field></div>
+        <div className="sm:col-span-2"><Field label="Choose Icon"><IconPicker value={d.emoji ?? "✨"} onChange={(v) => setD({ ...d, emoji: v })} /></Field></div>
       </div>
       <div className="mt-5 flex gap-2">
-        <button onClick={() => { if (!d.name || !d.amount) { toast.error("Name and amount are required"); return; } onSave(d); }} className="btn-gold rounded-full px-6 py-2 inline-flex items-center gap-2 font-semibold">
+        <button onClick={() => {
+          if (!d.name || !d.amount) { toast.error("Name and amount are required"); return; }
+          onSave(d, () => { if (resetOnSave) setD(empty()); });
+        }} className="btn-gold rounded-full px-6 py-2 inline-flex items-center gap-2 font-semibold">
           <Check size={16} /> Save
         </button>
         {onCancel && <button onClick={onCancel} className="glass rounded-full px-5 py-2 inline-flex items-center gap-2"><X size={16} /> Cancel</button>}
@@ -92,7 +106,8 @@ function DreamsPage() {
             <DreamForm
               initial={empty()}
               title="Add a Dream"
-              onSave={(d) => save.mutate(d, { onSuccess: () => toast.success("Dream added") })}
+              resetOnSave
+              onSave={(d, done) => save.mutate(d, { onSuccess: () => { toast.success("Dream added"); done(); } })}
             />
           </div>
 
@@ -110,7 +125,7 @@ function DreamsPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Total</div>
-                      <div className="font-display text-xl">{inr(total)}</div>
+                      <div className="font-display text-xl">{inrShort(total)}</div>
                     </div>
                   </div>
                   {list.length === 0 ? (
@@ -135,10 +150,10 @@ function DreamsPage() {
                                 <h4 className="font-display text-lg">{d.name}</h4>
                                 <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition">
                                   <button onClick={() => setEditingId(d.id)} className="text-muted-foreground hover:text-gold"><Pencil size={16} /></button>
-                                  <button onClick={() => { if (confirm("Delete this dream?")) del.mutate(d.id); }} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>
+                                  <button onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>
                                 </div>
                               </div>
-                              <div className="text-gold font-semibold">{inr(d.amount)} <span className="text-xs text-muted-foreground font-normal">· saved {inr(d.saved)}</span></div>
+                              <div className="text-gold font-semibold">{inrShort(d.amount)} <span className="text-xs text-muted-foreground font-normal">· saved {inrShort(d.saved)}</span></div>
                               <div className="text-xs text-muted-foreground mt-1">{d.deadline_years}y · {d.why || "—"}</div>
                             </div>
                           </div>
