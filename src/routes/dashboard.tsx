@@ -2,12 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { inr } from "@/lib/storage";
+import { inrShort } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
-import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, type Profile } from "@/lib/api";
-import { useEffect, useMemo, useState } from "react";
+import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, useSaveDream, useSaveDebt, useSaveGoal, type Profile } from "@/lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight } from "lucide-react";
+import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
