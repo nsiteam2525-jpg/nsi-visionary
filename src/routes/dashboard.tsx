@@ -2,12 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { inr } from "@/lib/storage";
+import { inrShort } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
-import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, type Profile } from "@/lib/api";
-import { useEffect, useMemo, useState } from "react";
+import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, useSaveDream, useSaveDebt, useSaveGoal, type Profile } from "@/lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight } from "lucide-react";
+import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
@@ -82,6 +82,41 @@ function Dashboard() {
   const { data: dreams = [] } = useDreams();
   const { data: debts = [] } = useDebts();
   const { data: others = [] } = useGoals();
+  const saveDream = useSaveDream();
+  const saveDebt = useSaveDebt();
+  const saveGoal = useSaveGoal();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onExport = () => {
+    const blob = new Blob([JSON.stringify({
+      exported_at: new Date().toISOString(),
+      profile, dreams, debts, other_goals: others,
+    }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nsi-data-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Data exported");
+  };
+
+  const onImport = async (file: File) => {
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const dArr = Array.isArray(json.dreams) ? json.dreams : [];
+      const debtArr = Array.isArray(json.debts) ? json.debts : [];
+      const goalArr = Array.isArray(json.other_goals) ? json.other_goals : [];
+      let count = 0;
+      for (const d of dArr) { const { id, user_id, created_at, updated_at, ...rest } = d; await saveDream.mutateAsync(rest); count++; }
+      for (const d of debtArr) { const { id, user_id, created_at, updated_at, ...rest } = d; await saveDebt.mutateAsync(rest); count++; }
+      for (const d of goalArr) { const { id, user_id, created_at, updated_at, ...rest } = d; await saveGoal.mutateAsync(rest); count++; }
+      toast.success(`Imported ${count} items`);
+    } catch (e: any) {
+      toast.error("Invalid file: " + (e?.message ?? "parse error"));
+    }
+  };
 
   useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
 
@@ -147,16 +182,19 @@ function Dashboard() {
             </h1>
             <p className="mt-2 text-muted-foreground italic">"{profile.motivation || "Every day is a step closer."}"</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <Link to="/dreams" className="btn-gold rounded-full px-5 py-2 text-sm font-semibold">+ Add Dream</Link>
+            <button onClick={onExport} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Download size={14}/> Export</button>
+            <button onClick={() => fileRef.current?.click()} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Upload size={14}/> Import</button>
+            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onImport(f); e.target.value = ""; }} />
             <button onClick={() => saveProfile.mutate({ onboarded: false })} className="glass rounded-full px-4 py-2 text-sm">Edit profile</button>
           </div>
         </motion.div>
 
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Counter label="Total Dream Amount" value={inr(stats.dreamTotal)} accent />
-          <Counter label="Total Debt" value={inr(stats.debtTotal)} />
-          <Counter label="Net Required" value={inr(stats.remaining)} />
+          <Counter label="Total Dream Amount" value={inrShort(stats.dreamTotal)} accent />
+          <Counter label="Total Debt" value={inrShort(stats.debtTotal)} />
+          <Counter label="Net Required" value={inrShort(stats.remaining)} />
           <Counter label="Goal Completion" value={`${stats.completion.toFixed(1)}%`} accent />
         </div>
 
@@ -166,14 +204,14 @@ function Dashboard() {
               <h3 className="font-display text-2xl">Micro Planning Engine</h3>
               <Sparkles className="text-gold" size={18} />
             </div>
-            <p className="text-sm text-muted-foreground mt-1">To finish your remaining {inr(stats.remaining)} on schedule, you need to earn / save:</p>
+            <p className="text-sm text-muted-foreground mt-1">To finish your remaining {inrShort(stats.remaining)} on schedule, you need to earn / save:</p>
             <div className="h-64 mt-4">
               <ResponsiveContainer>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.08)" />
                   <XAxis dataKey="name" stroke="oklch(0.78 0.03 250)" />
                   <YAxis stroke="oklch(0.78 0.03 250)" tickFormatter={(v) => v >= 1e5 ? `${(v / 1e5).toFixed(1)}L` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : v} />
-                  <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inr(Number(v))} />
+                  <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inrShort(Number(v))} />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="oklch(0.82 0.16 86)" />
                 </BarChart>
               </ResponsiveContainer>
@@ -191,7 +229,7 @@ function Dashboard() {
                     <Pie data={pieData} dataKey="value" innerRadius={50} outerRadius={90} paddingAngle={3}>
                       {pieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inr(Number(v))} />
+                    <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inrShort(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -220,7 +258,7 @@ function Dashboard() {
         <div className="mt-8 glass-strong p-8 text-center">
           <TrendingUp className="text-gold mx-auto" size={28} />
           <p className="mt-3 font-display text-2xl max-w-2xl mx-auto">
-            "{profile.nickname || "Dreamer"}, save {inr(Math.max(stats.daily, 0))} every single day — and your entire dream universe completes in {(dreams.length ? (dreams.reduce((a, b) => a + b.deadline_years, 0) / dreams.length).toFixed(1) : "—")} years."
+            "{profile.nickname || "Dreamer"}, save {inrShort(Math.max(stats.daily, 0))} every single day — and your entire dream universe completes in {(dreams.length ? (dreams.reduce((a, b) => a + b.deadline_years, 0) / dreams.length).toFixed(1) : "—")} years."
           </p>
         </div>
       </main>
