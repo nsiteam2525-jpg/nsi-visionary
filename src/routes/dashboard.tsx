@@ -182,8 +182,11 @@ function Dashboard() {
             </h1>
             <p className="mt-2 text-muted-foreground italic">"{profile.motivation || "Every day is a step closer."}"</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <Link to="/dreams" className="btn-gold rounded-full px-5 py-2 text-sm font-semibold">+ Add Dream</Link>
+            <button onClick={onExport} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Download size={14}/> Export</button>
+            <button onClick={() => fileRef.current?.click()} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Upload size={14}/> Import</button>
+            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onImport(f); e.target.value = ""; }} />
             <button onClick={() => saveProfile.mutate({ onboarded: false })} className="glass rounded-full px-4 py-2 text-sm">Edit profile</button>
           </div>
         </motion.div>
