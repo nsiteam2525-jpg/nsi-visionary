@@ -82,6 +82,41 @@ function Dashboard() {
   const { data: dreams = [] } = useDreams();
   const { data: debts = [] } = useDebts();
   const { data: others = [] } = useGoals();
+  const saveDream = useSaveDream();
+  const saveDebt = useSaveDebt();
+  const saveGoal = useSaveGoal();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onExport = () => {
+    const blob = new Blob([JSON.stringify({
+      exported_at: new Date().toISOString(),
+      profile, dreams, debts, other_goals: others,
+    }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nsi-data-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Data exported");
+  };
+
+  const onImport = async (file: File) => {
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const dArr = Array.isArray(json.dreams) ? json.dreams : [];
+      const debtArr = Array.isArray(json.debts) ? json.debts : [];
+      const goalArr = Array.isArray(json.other_goals) ? json.other_goals : [];
+      let count = 0;
+      for (const d of dArr) { const { id, user_id, created_at, updated_at, ...rest } = d; await saveDream.mutateAsync(rest); count++; }
+      for (const d of debtArr) { const { id, user_id, created_at, updated_at, ...rest } = d; await saveDebt.mutateAsync(rest); count++; }
+      for (const d of goalArr) { const { id, user_id, created_at, updated_at, ...rest } = d; await saveGoal.mutateAsync(rest); count++; }
+      toast.success(`Imported ${count} items`);
+    } catch (e: any) {
+      toast.error("Invalid file: " + (e?.message ?? "parse error"));
+    }
+  };
 
   useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
 
