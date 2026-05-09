@@ -154,9 +154,9 @@ function Dashboard() {
         </motion.div>
 
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Counter label="Total Dream Amount" value={inr(stats.dreamTotal)} accent />
-          <Counter label="Total Debt" value={inr(stats.debtTotal)} />
-          <Counter label="Net Required" value={inr(stats.remaining)} />
+          <Counter label="Total Dream Amount" value={inrShort(stats.dreamTotal)} accent />
+          <Counter label="Total Debt" value={inrShort(stats.debtTotal)} />
+          <Counter label="Net Required" value={inrShort(stats.remaining)} />
           <Counter label="Goal Completion" value={`${stats.completion.toFixed(1)}%`} accent />
         </div>
 
@@ -166,14 +166,14 @@ function Dashboard() {
               <h3 className="font-display text-2xl">Micro Planning Engine</h3>
               <Sparkles className="text-gold" size={18} />
             </div>
-            <p className="text-sm text-muted-foreground mt-1">To finish your remaining {inr(stats.remaining)} on schedule, you need to earn / save:</p>
+            <p className="text-sm text-muted-foreground mt-1">To finish your remaining {inrShort(stats.remaining)} on schedule, you need to earn / save:</p>
             <div className="h-64 mt-4">
               <ResponsiveContainer>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.08)" />
                   <XAxis dataKey="name" stroke="oklch(0.78 0.03 250)" />
                   <YAxis stroke="oklch(0.78 0.03 250)" tickFormatter={(v) => v >= 1e5 ? `${(v / 1e5).toFixed(1)}L` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : v} />
-                  <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inr(Number(v))} />
+                  <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inrShort(Number(v))} />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="oklch(0.82 0.16 86)" />
                 </BarChart>
               </ResponsiveContainer>
@@ -191,7 +191,7 @@ function Dashboard() {
                     <Pie data={pieData} dataKey="value" innerRadius={50} outerRadius={90} paddingAngle={3}>
                       {pieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inr(Number(v))} />
+                    <Tooltip contentStyle={{ background: "oklch(0.18 0.06 265)", border: "1px solid oklch(1 0 0 / 0.15)", borderRadius: 12 }} formatter={(v: any) => inrShort(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -220,7 +220,7 @@ function Dashboard() {
         <div className="mt-8 glass-strong p-8 text-center">
           <TrendingUp className="text-gold mx-auto" size={28} />
           <p className="mt-3 font-display text-2xl max-w-2xl mx-auto">
-            "{profile.nickname || "Dreamer"}, save {inr(Math.max(stats.daily, 0))} every single day — and your entire dream universe completes in {(dreams.length ? (dreams.reduce((a, b) => a + b.deadline_years, 0) / dreams.length).toFixed(1) : "—")} years."
+            "{profile.nickname || "Dreamer"}, save {inrShort(Math.max(stats.daily, 0))} every single day — and your entire dream universe completes in {(dreams.length ? (dreams.reduce((a, b) => a + b.deadline_years, 0) / dreams.length).toFixed(1) : "—")} years."
           </p>
         </div>
       </main>
