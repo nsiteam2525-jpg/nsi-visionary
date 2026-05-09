@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadershipRouteImport } from './routes/leadership'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DreamsRouteImport } from './routes/dreams'
 import { Route as DebtsRouteImport } from './routes/debts'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -25,6 +26,11 @@ const LoginRoute = LoginRouteImport.update({
 const LeadershipRoute = LeadershipRouteImport.update({
   id: '/leadership',
   path: '/leadership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DreamsRoute = DreamsRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/debts': typeof DebtsRoute
   '/dreams': typeof DreamsRoute
+  '/history': typeof HistoryRoute
   '/leadership': typeof LeadershipRoute
   '/login': typeof LoginRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/debts': typeof DebtsRoute
   '/dreams': typeof DreamsRoute
+  '/history': typeof HistoryRoute
   '/leadership': typeof LeadershipRoute
   '/login': typeof LoginRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/debts': typeof DebtsRoute
   '/dreams': typeof DreamsRoute
+  '/history': typeof HistoryRoute
   '/leadership': typeof LeadershipRoute
   '/login': typeof LoginRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/debts'
     | '/dreams'
+    | '/history'
     | '/leadership'
     | '/login'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/debts'
     | '/dreams'
+    | '/history'
     | '/leadership'
     | '/login'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/debts'
     | '/dreams'
+    | '/history'
     | '/leadership'
     | '/login'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DebtsRoute: typeof DebtsRoute
   DreamsRoute: typeof DreamsRoute
+  HistoryRoute: typeof HistoryRoute
   LeadershipRoute: typeof LeadershipRoute
   LoginRoute: typeof LoginRoute
 }
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/leadership'
       fullPath: '/leadership'
       preLoaderRoute: typeof LeadershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dreams': {
@@ -181,9 +201,20 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DebtsRoute: DebtsRoute,
   DreamsRoute: DreamsRoute,
+  HistoryRoute: HistoryRoute,
   LeadershipRoute: LeadershipRoute,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
