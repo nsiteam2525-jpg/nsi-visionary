@@ -144,17 +144,17 @@ function DreamsPage() {
                       ) : (
                         <motion.div key={d.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass p-5 group relative overflow-hidden">
                           <div className="flex items-start gap-4">
-                            <div className="w-14 h-14 rounded-2xl glass-strong flex items-center justify-center text-3xl">{d.emoji}</div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-display text-lg">{d.name}</h4>
-                                <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition">
-                                  <button onClick={() => setEditingId(d.id)} className="text-muted-foreground hover:text-gold"><Pencil size={16} /></button>
-                                  <button onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>
+                            <div className="w-14 h-14 shrink-0 rounded-2xl glass-strong flex items-center justify-center text-3xl">{d.emoji}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-display text-lg break-words min-w-0 flex-1">{d.name}</h4>
+                                <div className="flex items-center gap-2 shrink-0 opacity-80 group-hover:opacity-100 transition relative z-10">
+                                  <button type="button" onClick={() => setEditingId(d.id)} aria-label="Edit dream" className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Pencil size={16} /></button>
+                                  <button type="button" onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} aria-label="Delete dream" className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-white/5"><Trash2 size={16} /></button>
                                 </div>
                               </div>
                               <div className="text-gold font-semibold">{inrShort(d.amount)} <span className="text-xs text-muted-foreground font-normal">· saved {inrShort(d.saved)}</span></div>
-                              <div className="text-xs text-muted-foreground mt-1">{d.deadline_years}y · {d.why || "—"}</div>
+                              <div className="text-xs text-muted-foreground mt-1 break-words line-clamp-3">{d.deadline_years}y · {d.why || "—"}</div>
                             </div>
                           </div>
                         </motion.div>
