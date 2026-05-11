@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlannerRouteImport } from './routes/planner'
+import { Route as MotivationRouteImport } from './routes/motivation'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadershipRouteImport } from './routes/leadership'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -22,6 +23,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const PlannerRoute = PlannerRouteImport.update({
   id: '/planner',
   path: '/planner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MotivationRoute = MotivationRouteImport.update({
+  id: '/motivation',
+  path: '/motivation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/leadership': typeof LeadershipRoute
   '/login': typeof LoginRoute
+  '/motivation': typeof MotivationRoute
   '/planner': typeof PlannerRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/leadership': typeof LeadershipRoute
   '/login': typeof LoginRoute
+  '/motivation': typeof MotivationRoute
   '/planner': typeof PlannerRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/leadership': typeof LeadershipRoute
   '/login': typeof LoginRoute
+  '/motivation': typeof MotivationRoute
   '/planner': typeof PlannerRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/leadership'
     | '/login'
+    | '/motivation'
     | '/planner'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/leadership'
     | '/login'
+    | '/motivation'
     | '/planner'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/leadership'
     | '/login'
+    | '/motivation'
     | '/planner'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   LeadershipRoute: typeof LeadershipRoute
   LoginRoute: typeof LoginRoute
+  MotivationRoute: typeof MotivationRoute
   PlannerRoute: typeof PlannerRoute
 }
 
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/planner'
       fullPath: '/planner'
       preLoaderRoute: typeof PlannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/motivation': {
+      id: '/motivation'
+      path: '/motivation'
+      fullPath: '/motivation'
+      preLoaderRoute: typeof MotivationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   LeadershipRoute: LeadershipRoute,
   LoginRoute: LoginRoute,
+  MotivationRoute: MotivationRoute,
   PlannerRoute: PlannerRoute,
 }
 export const routeTree = rootRouteImport
