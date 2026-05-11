@@ -8,6 +8,7 @@ import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, useSaveDream
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight, Download, Upload } from "lucide-react";
+import { DailyMotivation } from "@/components/DailyMotivation";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
