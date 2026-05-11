@@ -192,7 +192,9 @@ function Dashboard() {
           </div>
         </motion.div>
 
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-8"><DailyMotivation /></div>
+
+        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Counter label="Total Dream Amount" value={inrShort(stats.dreamTotal)} accent />
           <Counter label="Total Debt" value={inrShort(stats.debtTotal)} />
           <Counter label="Net Required" value={inrShort(stats.remaining)} />
