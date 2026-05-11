@@ -86,6 +86,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dream_plans: {
+        Row: {
+          created_at: string
+          dream_id: string | null
+          dream_text: string
+          id: string
+          plan: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dream_id?: string | null
+          dream_text: string
+          id?: string
+          plan: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dream_id?: string | null
+          dream_text?: string
+          id?: string
+          plan?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dreams: {
         Row: {
           amount: number
@@ -128,6 +158,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           why?: string | null
+        }
+        Relationships: []
+      }
+      motivation_preferences: {
+        Row: {
+          best_time: string
+          channels: Json
+          email: string | null
+          frequency: string
+          harder_when_idle: boolean
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_time?: string
+          channels?: Json
+          email?: string | null
+          frequency?: string
+          harder_when_idle?: boolean
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          best_time?: string
+          channels?: Json
+          email?: string | null
+          frequency?: string
+          harder_when_idle?: boolean
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
