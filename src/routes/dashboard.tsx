@@ -8,6 +8,7 @@ import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, useSaveDream
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight, Download, Upload } from "lucide-react";
+import { DailyMotivation } from "@/components/DailyMotivation";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
@@ -191,7 +192,9 @@ function Dashboard() {
           </div>
         </motion.div>
 
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-8"><DailyMotivation /></div>
+
+        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Counter label="Total Dream Amount" value={inrShort(stats.dreamTotal)} accent />
           <Counter label="Total Debt" value={inrShort(stats.debtTotal)} />
           <Counter label="Net Required" value={inrShort(stats.remaining)} />
