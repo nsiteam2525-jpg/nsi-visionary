@@ -6,7 +6,7 @@ import { inrShort } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 import { useDreams, useSaveDream, useDeleteDream, type Dream } from "@/lib/api";
 import { useState } from "react";
-import { Trash2, Pencil, X, Check } from "lucide-react";
+import { Trash2, Pencil, X, Check, Trophy, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
 
@@ -113,9 +113,22 @@ function DreamsPage() {
 
           <div className="lg:col-span-2 space-y-8">
             {isLoading && <div className="glass p-6 text-center text-sm text-muted-foreground">Loading…</div>}
+            {(() => {
+              const achievedCount = dreams.filter((d) => d.amount > 0 && (d.saved || 0) >= d.amount).length;
+              return achievedCount > 0 ? (
+                <Link to="/achievements" className="glass-strong p-4 flex items-center justify-between hover:ring-gold transition group">
+                  <div className="flex items-center gap-3"><Trophy className="text-gold" size={20}/>
+                    <div><div className="font-display text-lg">{achievedCount} dream{achievedCount > 1 ? "s" : ""} already achieved 🏆</div>
+                    <div className="text-xs text-muted-foreground">Moved to your Wins page — open to celebrate.</div></div>
+                  </div>
+                  <span className="text-gold text-sm">Open Wins →</span>
+                </Link>
+              ) : null;
+            })()}
             {cats.map((c) => {
-              const list = dreams.filter((d) => d.category === c);
+              const list = dreams.filter((d) => d.category === c && !(d.amount > 0 && (d.saved || 0) >= d.amount));
               const total = list.reduce((a, b) => a + b.amount, 0);
+              const saved = list.reduce((a, b) => a + (b.saved || 0), 0);
               return (
                 <div key={c}>
                   <div className="flex items-end justify-between mb-3">
@@ -124,12 +137,12 @@ function DreamsPage() {
                       <div className="text-xs text-muted-foreground">{categoryMeta[c].range}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Total</div>
-                      <div className="font-display text-xl">{inrShort(total)}</div>
+                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Target · Saved</div>
+                      <div className="font-display text-xl">{inrShort(total)} <span className="text-sm text-muted-foreground">· {inrShort(saved)}</span></div>
                     </div>
                   </div>
                   {list.length === 0 ? (
-                    <div className="glass p-6 text-sm text-muted-foreground text-center">No {c} dreams yet — add one to begin.</div>
+                    <div className="glass p-6 text-sm text-muted-foreground text-center">No active {c} dreams — add one to begin.</div>
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-3">
                       {list.map((d) => editingId === d.id ? (
@@ -141,24 +154,40 @@ function DreamsPage() {
                             onSave={(patch) => save.mutate({ ...patch, id: d.id }, { onSuccess: () => { setEditingId(null); toast.success("Dream updated"); } })}
                           />
                         </div>
-                      ) : (
-                        <motion.div key={d.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass p-5 group relative overflow-hidden">
-                          <div className="flex items-start gap-4">
-                            <div className="w-14 h-14 shrink-0 rounded-2xl glass-strong flex items-center justify-center text-3xl">{d.emoji}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-display text-lg break-words min-w-0 flex-1">{d.name}</h4>
-                                <div className="flex items-center gap-2 shrink-0 opacity-80 group-hover:opacity-100 transition relative z-10">
-                                  <button type="button" onClick={() => setEditingId(d.id)} aria-label="Edit dream" className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Pencil size={16} /></button>
-                                  <button type="button" onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} aria-label="Delete dream" className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-white/5"><Trash2 size={16} /></button>
+                      ) : (() => {
+                        const remain = Math.max((d.amount || 0) - (d.saved || 0), 0);
+                        const pct = d.amount > 0 ? Math.min(((d.saved || 0) / d.amount) * 100, 100) : 0;
+                        const startDate = d.created_at ? new Date(d.created_at) : new Date();
+                        const targetDate = new Date(startDate);
+                        targetDate.setDate(targetDate.getDate() + Math.round((d.deadline_years || 1) * 365));
+                        const daysLeft = Math.round((+targetDate - Date.now()) / 86400000);
+                        const monthsLeft = Math.round(daysLeft / 30);
+                        const overdue = daysLeft < 0;
+                        return (
+                          <motion.div key={d.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass p-5 group relative overflow-hidden">
+                            <div className="flex items-start gap-4">
+                              <div className="w-14 h-14 shrink-0 rounded-2xl glass-strong flex items-center justify-center text-3xl">{d.emoji}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h4 className="font-display text-lg break-words min-w-0 flex-1">{d.name}</h4>
+                                  <div className="flex items-center gap-2 shrink-0 opacity-80 group-hover:opacity-100 transition relative z-10">
+                                    <button type="button" title="Mark achieved" onClick={() => { if (confirm(`Mark "${d.name}" as achieved?`)) save.mutate({ id: d.id, name: d.name, saved: d.amount }, { onSuccess: () => toast.success("🏆 Moved to Wins!") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Trophy size={16} /></button>
+                                    <button type="button" onClick={() => setEditingId(d.id)} aria-label="Edit dream" className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Pencil size={16} /></button>
+                                    <button type="button" onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} aria-label="Delete dream" className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-white/5"><Trash2 size={16} /></button>
+                                  </div>
                                 </div>
+                                <div className="text-gold font-semibold">{inrShort(d.amount)} <span className="text-xs text-muted-foreground font-normal">· saved {inrShort(d.saved)} · {inrShort(remain)} to go</span></div>
+                                <div className="mt-2 h-1.5 rounded-full bg-border/40 overflow-hidden"><div className="h-full bg-[var(--gradient-gold)]" style={{ width: `${pct}%` }} /></div>
+                                <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                                  <span className="glass px-2 py-0.5 rounded-full">{pct.toFixed(0)}% funded</span>
+                                  <span className={`glass px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${overdue ? "text-destructive" : "text-gold"}`}><Clock size={10}/> {overdue ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d (~${monthsLeft}mo) left`}</span>
+                                </div>
+                                {d.why && <div className="text-xs text-muted-foreground mt-2 break-words line-clamp-2">{d.why}</div>}
                               </div>
-                              <div className="text-gold font-semibold">{inrShort(d.amount)} <span className="text-xs text-muted-foreground font-normal">· saved {inrShort(d.saved)}</span></div>
-                              <div className="text-xs text-muted-foreground mt-1 break-words line-clamp-3">{d.deadline_years}y · {d.why || "—"}</div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        );
+                      })())}
                     </div>
                   )}
                 </div>
