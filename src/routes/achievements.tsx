@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Trophy, Calendar, Sparkles } from "lucide-react";
+import { Trophy, Calendar, Sparkles, Pencil, Trash2, Undo2, X, Check } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useAuth } from "@/lib/auth";
-import { useDreams } from "@/lib/api";
+import { useDreams, useSaveDream, useDeleteDream, type Dream } from "@/lib/api";
 import { inrShort } from "@/lib/storage";
+import { useState } from "react";
+import { toast } from "sonner";
+import { IconPicker } from "@/components/IconPicker";
 
 export const Route = createFileRoute("/achievements")({
   head: () => ({ meta: [{ title: "Achievements — NSI" }, { name: "description", content: "Dreams you have already achieved." }] }),
@@ -17,9 +20,48 @@ function daysBetween(a?: string, b?: string) {
   return Math.max(1, Math.round((+new Date(b) - +new Date(a)) / 86400000));
 }
 
+const inputCls = "w-full bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none";
+
+function EditDialog({ dream, onClose }: { dream: Dream; onClose: () => void }) {
+  const [d, setD] = useState<Partial<Dream>>(dream);
+  const save = useSaveDream();
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="glass-strong p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-2xl text-gradient-gold">Edit Achieved Dream</h3>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/5"><X size={18} /></button>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <label className="block sm:col-span-2"><div className="text-[11px] uppercase tracking-widest text-gold/80 mb-1">Dream Name</div>
+            <input className={inputCls} value={d.name ?? ""} onChange={(e) => setD({ ...d, name: e.target.value })} /></label>
+          <label className="block"><div className="text-[11px] uppercase tracking-widest text-gold/80 mb-1">Total Price (₹)</div>
+            <input type="number" className={inputCls} value={d.amount ?? ""} onChange={(e) => setD({ ...d, amount: Number(e.target.value) || 0 })} /></label>
+          <label className="block"><div className="text-[11px] uppercase tracking-widest text-gold/80 mb-1">Saved (₹)</div>
+            <input type="number" className={inputCls} value={d.saved ?? ""} onChange={(e) => setD({ ...d, saved: Number(e.target.value) || 0 })} /></label>
+          <label className="block sm:col-span-2"><div className="text-[11px] uppercase tracking-widest text-gold/80 mb-1">Why this mattered</div>
+            <input className={inputCls} value={d.why ?? ""} onChange={(e) => setD({ ...d, why: e.target.value })} /></label>
+          <div className="sm:col-span-2"><div className="text-[11px] uppercase tracking-widest text-gold/80 mb-1">Icon</div>
+            <IconPicker value={d.emoji ?? "✨"} onChange={(v) => setD({ ...d, emoji: v })} /></div>
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button onClick={() => {
+            if (!d.name || !d.amount) { toast.error("Name and amount are required"); return; }
+            save.mutate({ ...d, id: dream.id }, { onSuccess: () => { toast.success("Updated"); onClose(); } });
+          }} className="btn-gold rounded-full px-6 py-2 inline-flex items-center gap-2 font-semibold"><Check size={16} /> Save</button>
+          <button onClick={onClose} className="glass rounded-full px-5 py-2 inline-flex items-center gap-2"><X size={16} /> Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AchievementsPage() {
   const { user, loading } = useAuth();
   const { data: dreams = [], isLoading } = useDreams();
+  const save = useSaveDream();
+  const del = useDeleteDream();
+  const [editing, setEditing] = useState<Dream | null>(null);
 
   if (!loading && !user) {
     return (
@@ -63,10 +105,14 @@ function AchievementsPage() {
               const days = daysBetween(d.created_at, d.updated_at);
               const months = days ? Math.round(days / 30) : null;
               return (
-                <motion.div key={d.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-strong p-5 relative overflow-hidden">
-                  <div className="absolute top-3 right-3 text-gold"><Trophy size={18}/></div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center text-2xl">{d.emoji}</div>
+                <motion.div key={d.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-strong p-5 relative overflow-hidden group">
+                  <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
+                    <button title="Edit" onClick={() => setEditing(d)} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Pencil size={15} /></button>
+                    <button title="Move back to active dreams" onClick={() => { if (confirm(`Move "${d.name}" back to active dreams?`)) save.mutate({ id: d.id, name: d.name, saved: Math.max((d.amount || 1) - 1, 0) }, { onSuccess: () => toast.success("Moved back to Dreams") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Undo2 size={15} /></button>
+                    <button title="Delete" onClick={() => { if (confirm(`Delete "${d.name}"? This cannot be undone.`)) del.mutate({ id: d.id, name: d.name }, { onSuccess: () => toast.success("Deleted") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-white/5"><Trash2 size={15} /></button>
+                  </div>
+                  <div className="flex items-start gap-3 pr-24">
+                    <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center text-2xl shrink-0">{d.emoji}</div>
                     <div className="min-w-0 flex-1">
                       <h3 className="font-display text-lg break-words">{d.name}</h3>
                       <div className="text-gold font-semibold">{inrShort(d.amount)}</div>
@@ -87,7 +133,12 @@ function AchievementsPage() {
             })}
           </div>
         )}
+
+        <div className="mt-8 text-xs text-muted-foreground text-center">
+          All edits & deletes are tracked in your <Link to="/history" className="text-gold underline">History</Link> with date.
+        </div>
       </main>
+      {editing && <EditDialog dream={editing} onClose={() => setEditing(null)} />}
       <SiteFooter />
     </div>
   );
