@@ -7,9 +7,10 @@ import { useAuth } from "@/lib/auth";
 import { useProfile, useSaveProfile, useDreams, useDebts, useGoals, useSaveDream, useSaveDebt, useSaveGoal, type Profile } from "@/lib/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight, Download, Upload } from "lucide-react";
+import { Sparkles, Target, TrendingUp, Wallet, Heart, ArrowRight, Download, Upload, FileText } from "lucide-react";
 import { DailyMotivation } from "@/components/DailyMotivation";
 import { toast } from "sonner";
+import { exportFullReport } from "@/lib/pdf-export";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — NSI Life OS" }, { name: "description", content: "Your personal NSI life and financial micro-planning dashboard." }] }),
@@ -185,7 +186,8 @@ function Dashboard() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link to="/dreams" className="btn-gold rounded-full px-5 py-2 text-sm font-semibold">+ Add Dream</Link>
-            <button onClick={onExport} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Download size={14}/> Export</button>
+            <button onClick={() => { exportFullReport({ profile: profile ?? null, dreams, debts, goals: others }); toast.success("PDF downloaded"); }} className="btn-gold rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><FileText size={14}/> Download PDF</button>
+            <button onClick={onExport} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Download size={14}/> Export JSON</button>
             <button onClick={() => fileRef.current?.click()} className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2"><Upload size={14}/> Import</button>
             <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onImport(f); e.target.value = ""; }} />
             <button onClick={() => saveProfile.mutate({ onboarded: false })} className="glass rounded-full px-4 py-2 text-sm">Edit profile</button>

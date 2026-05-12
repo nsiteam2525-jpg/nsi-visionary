@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { generateText, Output } from "ai";
+import { generateObject } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -25,24 +25,35 @@ export const generateDreamPlan = createServerFn({ method: "POST" })
   .inputValidator((d: { dream: string; dreamId?: string; context?: string }) => d)
   .handler(async ({ data, context }) => {
     const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("AI is not configured");
+    if (!key) throw new Error("AI is not configured. Please add LOVABLE_API_KEY.");
+
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-2.5-flash");
 
-    const { output } = await generateText({
-      model,
-      experimental_output: Output.object({ schema: PlanSchema }),
-      system:
-        "You are a world-class life & business coach for Indians. Always reply in INR (₹), use Indian numbering (lakhs/crores) where natural, and be concrete, actionable, kind, and direct. Never give generic fluff.",
-      prompt: `Build a complete action plan for this dream: "${data.dream}".${data.context ? `\nContext: ${data.context}` : ""}\n\nReturn: summary, why it matters, timeline phases, step-by-step roadmap, daily habits, weekly tasks, monthly budget plan with breakdown, learning resources (books/courses/people/youtube), first 7 days tasks, and a one-line motivational push.`,
-    });
+    let plan: z.infer<typeof PlanSchema>;
+    try {
+      const { object } = await generateObject({
+        model,
+        schema: PlanSchema,
+        system:
+          "You are a world-class life & business coach for Indians. Always reply in INR (₹), use Indian numbering (lakhs/crores) where natural, and be concrete, actionable, kind, and direct. Never give generic fluff.",
+        prompt: `Build a complete action plan for this dream: "${data.dream}".${data.context ? `\nContext: ${data.context}` : ""}\n\nReturn: summary, why it matters, timeline phases (3-5), step-by-step roadmap (5-10 steps), daily habits (3-5), weekly tasks (3-5), monthly budget plan with breakdown, learning resources (books/courses/people/youtube channels), first 7 days tasks, and a one-line motivational push.`,
+      });
+      plan = object;
+    } catch (e: any) {
+      console.error("[planner] AI error", e);
+      throw new Error(e?.message || "AI failed to build the plan. Try again.");
+    }
 
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("dream_plans" as any)
-      .insert({ user_id: userId, dream_id: data.dreamId ?? null, dream_text: data.dream, plan: output } as any)
+      .insert({ user_id: userId, dream_id: data.dreamId ?? null, dream_text: data.dream, plan } as any)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[planner] DB error", error);
+      throw new Error(error.message);
+    }
     return row as any;
   });
