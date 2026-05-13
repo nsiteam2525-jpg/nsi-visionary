@@ -33,8 +33,23 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
+type DurationUnit = "day" | "week" | "month" | "year";
+const UNIT_TO_YEARS: Record<DurationUnit, number> = { day: 1 / 365, week: 7 / 365, month: 1 / 12, year: 1 };
+
+function yearsToBest(years: number): { value: number; unit: DurationUnit } {
+  const days = (years || 0) * 365;
+  if (days < 7) return { value: Math.max(1, Math.round(days)), unit: "day" };
+  if (days < 30) return { value: Math.max(1, Math.round(days / 7)), unit: "week" };
+  if (days < 365) return { value: Math.max(1, Math.round(days / 30)), unit: "month" };
+  const y = years || 1;
+  return { value: Number.isInteger(y) ? y : Number(y.toFixed(1)), unit: "year" };
+}
+
 function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial: Partial<Dream>; onSave: (d: Partial<Dream>, done: () => void) => void; onCancel?: () => void; title: string; resetOnSave?: boolean }) {
   const [d, setD] = useState<Partial<Dream>>(initial);
+  const initBest = yearsToBest(initial.deadline_years ?? 1);
+  const [durValue, setDurValue] = useState<number>(initBest.value);
+  const [durUnit, setDurUnit] = useState<DurationUnit>(initBest.unit);
   const num = (v: string) => v === "" ? undefined : Number(v);
   const inputCls = "w-full bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none";
   return (
@@ -50,7 +65,17 @@ function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial:
           </select>
         </Field>
         <Field label="Total Price (₹)" hint="Full target amount you need"><input type="number" className={inputCls} placeholder="e.g. 2500000" value={d.amount ?? ""} onChange={(e) => setD({ ...d, amount: num(e.target.value) ?? 0 })} /></Field>
-        <Field label="Years to Achieve"><input type="number" step="0.5" className={inputCls} placeholder="e.g. 3" value={d.deadline_years ?? ""} onChange={(e) => setD({ ...d, deadline_years: num(e.target.value) ?? 1 })} /></Field>
+        <Field label="Time to Achieve" hint="Pick any unit — days, weeks, months or years">
+          <div className="flex gap-2">
+            <input type="number" min={1} step="1" className={inputCls} placeholder="e.g. 30" value={durValue} onChange={(e) => setDurValue(Number(e.target.value) || 1)} />
+            <select className={inputCls + " bg-background/40 max-w-[44%]"} value={durUnit} onChange={(e) => setDurUnit(e.target.value as DurationUnit)}>
+              <option value="day">Days</option>
+              <option value="week">Weeks</option>
+              <option value="month">Months</option>
+              <option value="year">Years</option>
+            </select>
+          </div>
+        </Field>
         <Field label="Already Saved (₹)" hint="How much you've already saved toward it"><input type="number" className={inputCls} placeholder="e.g. 100000" value={d.saved ?? ""} onChange={(e) => setD({ ...d, saved: num(e.target.value) ?? 0 })} /></Field>
         <Field label="Priority">
           <select className={inputCls + " bg-background/40"} value={d.priority} onChange={(e) => setD({ ...d, priority: Number(e.target.value) })}>
@@ -63,7 +88,10 @@ function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial:
       <div className="mt-5 flex gap-2">
         <button onClick={() => {
           if (!d.name || !d.amount) { toast.error("Name and amount are required"); return; }
-          onSave(d, () => { if (resetOnSave) setD(empty()); });
+          const deadline_years = (durValue || 1) * UNIT_TO_YEARS[durUnit];
+          onSave({ ...d, deadline_years }, () => {
+            if (resetOnSave) { setD(empty()); setDurValue(1); setDurUnit("year"); }
+          });
         }} className="btn-gold rounded-full px-6 py-2 inline-flex items-center gap-2 font-semibold">
           <Check size={16} /> Save
         </button>
