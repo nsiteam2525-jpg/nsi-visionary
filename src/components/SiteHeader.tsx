@@ -18,14 +18,22 @@ const links = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { user, signOut } = useAuth();
   const nav = useNavigate();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const onLogout = async () => { await signOut(); nav({ to: "/" }); };
 
   return (
-    <header className="sticky top-0 z-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4">
+    <header className={`sticky top-0 z-50 transition-colors ${scrolled ? "bg-background/85 backdrop-blur-xl border-b border-border shadow-lg" : ""}`}>
+      <div className="mx-auto max-w-[88rem] px-4 sm:px-8 pt-4 pb-2">
         <div className="glass-strong flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center"><Logo /></Link>
           <nav className="hidden md:flex items-center gap-1">
