@@ -142,7 +142,7 @@ function DreamsPage() {
           <div className="lg:col-span-2 space-y-8">
             {isLoading && <div className="glass p-6 text-center text-sm text-muted-foreground">Loading…</div>}
             {(() => {
-              const achievedCount = dreams.filter((d) => d.amount > 0 && (d.saved || 0) >= d.amount).length;
+              const achievedCount = dreams.filter((d) => d.is_achieved).length;
               return achievedCount > 0 ? (
                 <Link to="/achievements" className="glass-strong p-4 flex items-center justify-between hover:ring-gold transition group">
                   <div className="flex items-center gap-3"><Trophy className="text-gold" size={20}/>
@@ -154,7 +154,7 @@ function DreamsPage() {
               ) : null;
             })()}
             {cats.map((c) => {
-              const list = dreams.filter((d) => d.category === c && !(d.amount > 0 && (d.saved || 0) >= d.amount));
+              const list = dreams.filter((d) => d.category === c && !d.is_achieved);
               const total = list.reduce((a, b) => a + b.amount, 0);
               const saved = list.reduce((a, b) => a + (b.saved || 0), 0);
               return (
