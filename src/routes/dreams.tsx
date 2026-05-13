@@ -165,8 +165,11 @@ function DreamsPage() {
                       <div className="text-xs text-muted-foreground">{categoryMeta[c].range}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Target · Saved</div>
-                      <div className="font-display text-xl">{inrShort(total)} <span className="text-sm text-muted-foreground">· {inrShort(saved)}</span></div>
+                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Target / Saved</div>
+                      <div className="mt-1 flex items-baseline gap-2 justify-end flex-wrap">
+                        <span className="font-display text-2xl text-gradient-gold">{inrShort(total)}</span>
+                        <span className="text-base text-foreground/80">/ <span className="text-foreground font-semibold">{inrShort(saved)}</span></span>
+                      </div>
                     </div>
                   </div>
                   {list.length === 0 ? (
