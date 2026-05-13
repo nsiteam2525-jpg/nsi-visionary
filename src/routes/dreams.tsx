@@ -199,7 +199,7 @@ function DreamsPage() {
                                 <div className="flex items-start justify-between gap-2">
                                   <h4 className="font-display text-lg break-words min-w-0 flex-1">{d.name}</h4>
                                   <div className="flex items-center gap-2 shrink-0 opacity-80 group-hover:opacity-100 transition relative z-10">
-                                    <button type="button" title="Mark achieved" onClick={() => { if (confirm(`Mark "${d.name}" as achieved?`)) save.mutate({ id: d.id, name: d.name, saved: d.amount }, { onSuccess: () => toast.success("🏆 Moved to Wins!") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Trophy size={16} /></button>
+                                    <button type="button" title="Mark achieved" onClick={() => { if (confirm(`Mark "${d.name}" as achieved?`)) save.mutate({ id: d.id, name: d.name, is_achieved: true, achieved_at: new Date().toISOString() } as any, { onSuccess: () => toast.success("🏆 Moved to Wins!") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Trophy size={16} /></button>
                                     <button type="button" onClick={() => setEditingId(d.id)} aria-label="Edit dream" className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Pencil size={16} /></button>
                                     <button type="button" onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} aria-label="Delete dream" className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-white/5"><Trash2 size={16} /></button>
                                   </div>
