@@ -124,7 +124,7 @@ function DreamsPage() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      <main className="mx-auto max-w-[88rem] px-4 sm:px-8 py-10">
         <div className="text-xs uppercase tracking-[0.3em] text-gold">Vision Board</div>
         <h1 className="mt-2 font-display text-4xl sm:text-5xl">Your Dreams Universe</h1>
         <p className="mt-3 text-muted-foreground max-w-2xl">Every dream you add becomes a star in your sky. Add it. See it. Earn it.</p>

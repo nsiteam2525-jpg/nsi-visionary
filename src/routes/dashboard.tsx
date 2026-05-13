@@ -175,7 +175,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      <main className="mx-auto max-w-[88rem] px-4 sm:px-8 py-10">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-gold">Welcome back</div>
