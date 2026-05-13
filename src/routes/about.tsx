@@ -14,7 +14,7 @@ function About() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
+      <main className="mx-auto max-w-[88rem] px-4 sm:px-8 py-12">
         {/* HERO */}
         <section className="grid lg:grid-cols-5 gap-10 items-center">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} className="lg:col-span-2 relative">

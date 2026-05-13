@@ -33,8 +33,23 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
+type DurationUnit = "day" | "week" | "month" | "year";
+const UNIT_TO_YEARS: Record<DurationUnit, number> = { day: 1 / 365, week: 7 / 365, month: 1 / 12, year: 1 };
+
+function yearsToBest(years: number): { value: number; unit: DurationUnit } {
+  const days = (years || 0) * 365;
+  if (days < 7) return { value: Math.max(1, Math.round(days)), unit: "day" };
+  if (days < 30) return { value: Math.max(1, Math.round(days / 7)), unit: "week" };
+  if (days < 365) return { value: Math.max(1, Math.round(days / 30)), unit: "month" };
+  const y = years || 1;
+  return { value: Number.isInteger(y) ? y : Number(y.toFixed(1)), unit: "year" };
+}
+
 function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial: Partial<Dream>; onSave: (d: Partial<Dream>, done: () => void) => void; onCancel?: () => void; title: string; resetOnSave?: boolean }) {
   const [d, setD] = useState<Partial<Dream>>(initial);
+  const initBest = yearsToBest(initial.deadline_years ?? 1);
+  const [durValue, setDurValue] = useState<number>(initBest.value);
+  const [durUnit, setDurUnit] = useState<DurationUnit>(initBest.unit);
   const num = (v: string) => v === "" ? undefined : Number(v);
   const inputCls = "w-full bg-transparent border border-border focus:border-gold rounded-lg px-3 py-2 outline-none";
   return (
@@ -50,7 +65,17 @@ function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial:
           </select>
         </Field>
         <Field label="Total Price (₹)" hint="Full target amount you need"><input type="number" className={inputCls} placeholder="e.g. 2500000" value={d.amount ?? ""} onChange={(e) => setD({ ...d, amount: num(e.target.value) ?? 0 })} /></Field>
-        <Field label="Years to Achieve"><input type="number" step="0.5" className={inputCls} placeholder="e.g. 3" value={d.deadline_years ?? ""} onChange={(e) => setD({ ...d, deadline_years: num(e.target.value) ?? 1 })} /></Field>
+        <Field label="Time to Achieve" hint="Pick any unit — days, weeks, months or years">
+          <div className="flex gap-2">
+            <input type="number" min={1} step="1" className={inputCls} placeholder="e.g. 30" value={durValue} onChange={(e) => setDurValue(Number(e.target.value) || 1)} />
+            <select className={inputCls + " bg-background/40 max-w-[44%]"} value={durUnit} onChange={(e) => setDurUnit(e.target.value as DurationUnit)}>
+              <option value="day">Days</option>
+              <option value="week">Weeks</option>
+              <option value="month">Months</option>
+              <option value="year">Years</option>
+            </select>
+          </div>
+        </Field>
         <Field label="Already Saved (₹)" hint="How much you've already saved toward it"><input type="number" className={inputCls} placeholder="e.g. 100000" value={d.saved ?? ""} onChange={(e) => setD({ ...d, saved: num(e.target.value) ?? 0 })} /></Field>
         <Field label="Priority">
           <select className={inputCls + " bg-background/40"} value={d.priority} onChange={(e) => setD({ ...d, priority: Number(e.target.value) })}>
@@ -63,7 +88,10 @@ function DreamForm({ initial, onSave, onCancel, title, resetOnSave }: { initial:
       <div className="mt-5 flex gap-2">
         <button onClick={() => {
           if (!d.name || !d.amount) { toast.error("Name and amount are required"); return; }
-          onSave(d, () => { if (resetOnSave) setD(empty()); });
+          const deadline_years = (durValue || 1) * UNIT_TO_YEARS[durUnit];
+          onSave({ ...d, deadline_years }, () => {
+            if (resetOnSave) { setD(empty()); setDurValue(1); setDurUnit("year"); }
+          });
         }} className="btn-gold rounded-full px-6 py-2 inline-flex items-center gap-2 font-semibold">
           <Check size={16} /> Save
         </button>
@@ -96,7 +124,7 @@ function DreamsPage() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      <main className="mx-auto max-w-[88rem] px-4 sm:px-8 py-10">
         <div className="text-xs uppercase tracking-[0.3em] text-gold">Vision Board</div>
         <h1 className="mt-2 font-display text-4xl sm:text-5xl">Your Dreams Universe</h1>
         <p className="mt-3 text-muted-foreground max-w-2xl">Every dream you add becomes a star in your sky. Add it. See it. Earn it.</p>
@@ -114,7 +142,7 @@ function DreamsPage() {
           <div className="lg:col-span-2 space-y-8">
             {isLoading && <div className="glass p-6 text-center text-sm text-muted-foreground">Loading…</div>}
             {(() => {
-              const achievedCount = dreams.filter((d) => d.amount > 0 && (d.saved || 0) >= d.amount).length;
+              const achievedCount = dreams.filter((d) => d.is_achieved).length;
               return achievedCount > 0 ? (
                 <Link to="/achievements" className="glass-strong p-4 flex items-center justify-between hover:ring-gold transition group">
                   <div className="flex items-center gap-3"><Trophy className="text-gold" size={20}/>
@@ -126,7 +154,7 @@ function DreamsPage() {
               ) : null;
             })()}
             {cats.map((c) => {
-              const list = dreams.filter((d) => d.category === c && !(d.amount > 0 && (d.saved || 0) >= d.amount));
+              const list = dreams.filter((d) => d.category === c && !d.is_achieved);
               const total = list.reduce((a, b) => a + b.amount, 0);
               const saved = list.reduce((a, b) => a + (b.saved || 0), 0);
               return (
@@ -137,8 +165,11 @@ function DreamsPage() {
                       <div className="text-xs text-muted-foreground">{categoryMeta[c].range}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Target · Saved</div>
-                      <div className="font-display text-xl">{inrShort(total)} <span className="text-sm text-muted-foreground">· {inrShort(saved)}</span></div>
+                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Target / Saved</div>
+                      <div className="mt-1 flex items-baseline gap-2 justify-end flex-wrap">
+                        <span className="font-display text-2xl text-gradient-gold">{inrShort(total)}</span>
+                        <span className="text-base text-foreground/80">/ <span className="text-foreground font-semibold">{inrShort(saved)}</span></span>
+                      </div>
                     </div>
                   </div>
                   {list.length === 0 ? (
@@ -171,7 +202,7 @@ function DreamsPage() {
                                 <div className="flex items-start justify-between gap-2">
                                   <h4 className="font-display text-lg break-words min-w-0 flex-1">{d.name}</h4>
                                   <div className="flex items-center gap-2 shrink-0 opacity-80 group-hover:opacity-100 transition relative z-10">
-                                    <button type="button" title="Mark achieved" onClick={() => { if (confirm(`Mark "${d.name}" as achieved?`)) save.mutate({ id: d.id, name: d.name, saved: d.amount }, { onSuccess: () => toast.success("🏆 Moved to Wins!") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Trophy size={16} /></button>
+                                    <button type="button" title="Mark achieved" onClick={() => { if (confirm(`Mark "${d.name}" as achieved?`)) save.mutate({ id: d.id, name: d.name, is_achieved: true, achieved_at: new Date().toISOString() } as any, { onSuccess: () => toast.success("🏆 Moved to Wins!") }); }} className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Trophy size={16} /></button>
                                     <button type="button" onClick={() => setEditingId(d.id)} aria-label="Edit dream" className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-white/5"><Pencil size={16} /></button>
                                     <button type="button" onClick={() => { if (confirm("Delete this dream?")) del.mutate({ id: d.id, name: d.name }); }} aria-label="Delete dream" className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-white/5"><Trash2 size={16} /></button>
                                   </div>

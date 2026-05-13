@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Sparkles, Quote, Target, ListChecks, Timer } from "lucide-react";
+import { Sparkles, Quote, Target, Timer } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useDreams } from "@/lib/api";
 import { inrShort } from "@/lib/storage";
@@ -21,13 +21,6 @@ const QUOTES = [
   ["A goal without a plan is just a wish.", "— Antoine de Saint-Exupéry"],
   ["Discipline equals freedom.", "— Jocko Willink"],
 ];
-const TASKS = [
-  "Spend 30 focused minutes on your #1 dream — no phone.",
-  "Write down 3 things you'll do this week to move forward.",
-  "Cut one expense today and move that amount to savings.",
-  "Reach out to one person who can help your dream.",
-  "Read 10 pages of a book related to your goal.",
-];
 
 function dayIndex() { const d = new Date(); return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000); }
 function pick<T>(a: T[], offset = 0) { return a[(dayIndex() + offset) % a.length]; }
@@ -38,19 +31,22 @@ export function DailyMotivation() {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const i = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(i); }, []);
 
+  // Pick the active (not achieved) dream with the LEAST time left
   const focus = useMemo(() => {
-    if (!dreams.length) return null;
-    const sorted = [...dreams].sort((a, b) => (a.priority - b.priority) || (a.deadline_years - b.deadline_years));
-    return sorted[0];
-  }, [dreams]);
-
-  const targetDate = focus ? new Date(Date.now() + focus.deadline_years * 365.25 * 86400000) : null;
-  const days = targetDate ? Math.max(0, Math.ceil((targetDate.getTime() - now) / 86400000)) : 0;
+    const active = dreams.filter((d) => !d.is_achieved);
+    if (!active.length) return null;
+    const withTarget = active.map((d) => {
+      const start = d.created_at ? new Date(d.created_at).getTime() : Date.now();
+      const target = start + (d.deadline_years || 1) * 365.25 * 86400000;
+      return { d, daysLeft: Math.ceil((target - now) / 86400000) };
+    });
+    withTarget.sort((a, b) => a.daysLeft - b.daysLeft);
+    return withTarget[0];
+  }, [dreams, now]);
 
   if (!user) return null;
   const aff = pick(AFFIRMATIONS);
   const [q, qa] = pick(QUOTES, 1);
-  const task = pick(TASKS, 2);
 
   return (
     <div className="glass-strong p-6 relative overflow-hidden">
@@ -65,22 +61,18 @@ export function DailyMotivation() {
         {focus && (
           <div className="p-4 rounded-xl bg-white/5 border border-border">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold/80"><Target size={14}/> Today's Focus Dream</div>
-            <div className="mt-1 flex items-center gap-2"><span className="text-2xl">{focus.emoji}</span><span className="font-display text-lg break-words">{focus.name}</span></div>
-            <div className="text-xs text-muted-foreground">{inrShort(focus.amount)} · {focus.why || "—"}</div>
+            <div className="mt-1 flex items-center gap-2"><span className="text-2xl">{focus.d.emoji}</span><span className="font-display text-lg break-words">{focus.d.name}</span></div>
+            <div className="text-xs text-muted-foreground">{inrShort(focus.d.amount)} · {focus.d.why || "—"}</div>
           </div>
         )}
         <div className="p-4 rounded-xl bg-white/5 border border-border">
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold/80"><Timer size={14}/> Countdown</div>
           {focus ? (
             <>
-              <div className="mt-1 font-display text-3xl text-gradient-gold">{days}</div>
-              <div className="text-xs text-muted-foreground">days until <b>{focus.name}</b></div>
+              <div className="mt-1 font-display text-3xl text-gradient-gold">{Math.max(0, focus.daysLeft)}</div>
+              <div className="text-xs text-muted-foreground">days until <b>{focus.d.name}</b></div>
             </>
           ) : <div className="text-sm text-muted-foreground mt-1">Add a dream to start your countdown.</div>}
-        </div>
-        <div className="p-4 rounded-xl bg-white/5 border border-border sm:col-span-2">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold/80"><ListChecks size={14}/> Today's Action</div>
-          <div className="mt-1 text-sm">{task}</div>
         </div>
         <div className="p-4 rounded-xl bg-gold/5 border border-gold/20 sm:col-span-2 flex items-start gap-3">
           <Quote className="text-gold shrink-0" size={18}/>

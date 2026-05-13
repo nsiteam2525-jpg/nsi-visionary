@@ -12,6 +12,8 @@ export interface Dream {
   why: string;
   saved: number;
   emoji: string;
+  is_achieved?: boolean;
+  achieved_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }

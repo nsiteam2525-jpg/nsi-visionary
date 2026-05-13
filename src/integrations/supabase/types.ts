@@ -118,12 +118,14 @@ export type Database = {
       }
       dreams: {
         Row: {
+          achieved_at: string | null
           amount: number
           category: string
           created_at: string
           deadline_years: number
           emoji: string | null
           id: string
+          is_achieved: boolean
           name: string
           priority: number
           saved: number
@@ -132,12 +134,14 @@ export type Database = {
           why: string | null
         }
         Insert: {
+          achieved_at?: string | null
           amount?: number
           category: string
           created_at?: string
           deadline_years?: number
           emoji?: string | null
           id?: string
+          is_achieved?: boolean
           name: string
           priority?: number
           saved?: number
@@ -146,12 +150,14 @@ export type Database = {
           why?: string | null
         }
         Update: {
+          achieved_at?: string | null
           amount?: number
           category?: string
           created_at?: string
           deadline_years?: number
           emoji?: string | null
           id?: string
+          is_achieved?: boolean
           name?: string
           priority?: number
           saved?: number
