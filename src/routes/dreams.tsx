@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { inrShort } from "@/lib/storage";
+import { inrShort, dreamCountdown } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 import { useDreams, useSaveDream, useDeleteDream, type Dream } from "@/lib/api";
 import { useState } from "react";
@@ -188,12 +188,9 @@ function DreamsPage() {
                       ) : (() => {
                         const remain = Math.max((d.amount || 0) - (d.saved || 0), 0);
                         const pct = d.amount > 0 ? Math.min(((d.saved || 0) / d.amount) * 100, 100) : 0;
-                        const startDate = d.created_at ? new Date(d.created_at) : new Date();
-                        const targetDate = new Date(startDate);
-                        targetDate.setDate(targetDate.getDate() + Math.round((d.deadline_years || 1) * 365));
-                        const daysLeft = Math.round((+targetDate - Date.now()) / 86400000);
-                        const monthsLeft = Math.round(daysLeft / 30);
-                        const overdue = daysLeft < 0;
+                        const c = dreamCountdown(d.created_at, d.deadline_years);
+                        const daysLeft = c.overdue ? -c.days : c.days;
+                        const overdue = c.overdue;
                         return (
                           <motion.div key={d.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass p-5 group relative overflow-hidden">
                             <div className="flex items-start gap-4">
@@ -211,7 +208,7 @@ function DreamsPage() {
                                 <div className="mt-2 h-1.5 rounded-full bg-border/40 overflow-hidden"><div className="h-full bg-[var(--gradient-gold)]" style={{ width: `${pct}%` }} /></div>
                                 <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                                   <span className="glass px-2 py-0.5 rounded-full">{pct.toFixed(0)}% funded</span>
-                                  <span className={`glass px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${overdue ? "text-destructive" : "text-gold"}`}><Clock size={10}/> {overdue ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d (~${monthsLeft}mo) left`}</span>
+                                  <span className={`glass px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${overdue ? "text-destructive" : "text-gold"}`}><Clock size={10}/> {overdue ? `${Math.abs(daysLeft)}d overdue` : `${c.days}d ${String(c.hours).padStart(2,"0")}h left`}</span>
                                 </div>
                                 {d.why && <div className="text-xs text-muted-foreground mt-2 break-words line-clamp-2">{d.why}</div>}
                               </div>
