@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Sparkles, Quote, Target, Timer } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useDreams } from "@/lib/api";
-import { inrShort } from "@/lib/storage";
+import { inrShort, dreamCountdown } from "@/lib/storage";
 
 const AFFIRMATIONS = [
   "I am the architect of my dream life.",
