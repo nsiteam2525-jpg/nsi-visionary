@@ -188,12 +188,10 @@ function DreamsPage() {
                       ) : (() => {
                         const remain = Math.max((d.amount || 0) - (d.saved || 0), 0);
                         const pct = d.amount > 0 ? Math.min(((d.saved || 0) / d.amount) * 100, 100) : 0;
-                        const startDate = d.created_at ? new Date(d.created_at) : new Date();
-                        const targetDate = new Date(startDate);
-                        targetDate.setDate(targetDate.getDate() + Math.round((d.deadline_years || 1) * 365));
-                        const daysLeft = Math.round((+targetDate - Date.now()) / 86400000);
-                        const monthsLeft = Math.round(daysLeft / 30);
-                        const overdue = daysLeft < 0;
+                        const c = dreamCountdown(d.created_at, d.deadline_years);
+                        const daysLeft = c.overdue ? -c.days : c.days;
+                        const monthsLeft = Math.round(c.days / 30);
+                        const overdue = c.overdue;
                         return (
                           <motion.div key={d.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass p-5 group relative overflow-hidden">
                             <div className="flex items-start gap-4">
