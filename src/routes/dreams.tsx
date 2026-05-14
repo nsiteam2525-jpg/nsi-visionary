@@ -190,7 +190,6 @@ function DreamsPage() {
                         const pct = d.amount > 0 ? Math.min(((d.saved || 0) / d.amount) * 100, 100) : 0;
                         const c = dreamCountdown(d.created_at, d.deadline_years);
                         const daysLeft = c.overdue ? -c.days : c.days;
-                        const monthsLeft = Math.round(c.days / 30);
                         const overdue = c.overdue;
                         return (
                           <motion.div key={d.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass p-5 group relative overflow-hidden">
