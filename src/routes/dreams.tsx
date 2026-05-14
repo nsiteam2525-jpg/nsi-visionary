@@ -209,7 +209,7 @@ function DreamsPage() {
                                 <div className="mt-2 h-1.5 rounded-full bg-border/40 overflow-hidden"><div className="h-full bg-[var(--gradient-gold)]" style={{ width: `${pct}%` }} /></div>
                                 <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                                   <span className="glass px-2 py-0.5 rounded-full">{pct.toFixed(0)}% funded</span>
-                                  <span className={`glass px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${overdue ? "text-destructive" : "text-gold"}`}><Clock size={10}/> {overdue ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d (~${monthsLeft}mo) left`}</span>
+                                  <span className={`glass px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${overdue ? "text-destructive" : "text-gold"}`}><Clock size={10}/> {overdue ? `${Math.abs(daysLeft)}d overdue` : `${c.days}d ${String(c.hours).padStart(2,"0")}h left`}</span>
                                 </div>
                                 {d.why && <div className="text-xs text-muted-foreground mt-2 break-words line-clamp-2">{d.why}</div>}
                               </div>
