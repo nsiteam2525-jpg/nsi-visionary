@@ -16,6 +16,24 @@ export function useLocal<T>(key: string, initial: T) {
   return [value, setValue] as const;
 }
 
+// Single source of truth for dream countdown math
+// deadline_years is stored as decimal years; 1 year === 365 days exactly
+// to match what the user enters in the form (Days/Weeks/Months/Years).
+export function dreamTargetMs(createdAt?: string | null, deadlineYears?: number | null): number {
+  const start = createdAt ? new Date(createdAt).getTime() : Date.now();
+  return start + (deadlineYears || 0) * 365 * 86400000;
+}
+export function dreamCountdown(createdAt?: string | null, deadlineYears?: number | null, now: number = Date.now()) {
+  const target = dreamTargetMs(createdAt, deadlineYears);
+  const diff = target - now;
+  const abs = Math.abs(diff);
+  const days = Math.floor(abs / 86400000);
+  const hours = Math.floor((abs % 86400000) / 3600000);
+  const minutes = Math.floor((abs % 3600000) / 60000);
+  const seconds = Math.floor((abs % 60000) / 1000);
+  return { target, diff, overdue: diff < 0, days, hours, minutes, seconds };
+}
+
 export const inr = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 
