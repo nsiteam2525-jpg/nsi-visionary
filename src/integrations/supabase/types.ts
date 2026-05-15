@@ -236,14 +236,23 @@ export type Database = {
       profiles: {
         Row: {
           age: number | null
+          anniversary_date: string | null
+          avatar_path: string | null
+          avatar_url: string | null
+          birthday: string | null
+          celebration_opt_in: boolean
           city: string | null
           created_at: string
           full_name: string | null
+          gender: string | null
+          greeting_last_seen_on: string | null
           id: string
           monthly_income: number | null
           motivation: string | null
           nickname: string | null
           onboarded: boolean
+          password_changed_at: string | null
+          relationship_status: string | null
           retirement_age: number | null
           savings: number | null
           updated_at: string
@@ -251,14 +260,23 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          anniversary_date?: string | null
+          avatar_path?: string | null
+          avatar_url?: string | null
+          birthday?: string | null
+          celebration_opt_in?: boolean
           city?: string | null
           created_at?: string
           full_name?: string | null
+          gender?: string | null
+          greeting_last_seen_on?: string | null
           id?: string
           monthly_income?: number | null
           motivation?: string | null
           nickname?: string | null
           onboarded?: boolean
+          password_changed_at?: string | null
+          relationship_status?: string | null
           retirement_age?: number | null
           savings?: number | null
           updated_at?: string
@@ -266,16 +284,127 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          anniversary_date?: string | null
+          avatar_path?: string | null
+          avatar_url?: string | null
+          birthday?: string | null
+          celebration_opt_in?: boolean
           city?: string | null
           created_at?: string
           full_name?: string | null
+          gender?: string | null
+          greeting_last_seen_on?: string | null
           id?: string
           monthly_income?: number | null
           motivation?: string | null
           nickname?: string | null
           onboarded?: boolean
+          password_changed_at?: string | null
+          relationship_status?: string | null
           retirement_age?: number | null
           savings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_celebration_events: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string
+          event_date: string
+          event_type: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string
+          event_date: string
+          event_type: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string
+          event_date?: string
+          event_type?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_email_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          recipient_email: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          recipient_email: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          recipient_email?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_greeting_schedule: {
+        Row: {
+          created_at: string
+          id: string
+          last_processed_for: string | null
+          next_run_at: string | null
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_processed_for?: string | null
+          next_run_at?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_processed_for?: string | null
+          next_run_at?: string | null
+          timezone?: string
           updated_at?: string
           user_id?: string
         }
@@ -286,7 +415,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      queue_daily_greeting_events: {
+        Args: { _run_date?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
